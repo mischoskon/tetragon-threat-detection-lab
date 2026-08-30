@@ -1,0 +1,59 @@
+# Editor and IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS temporary files
+Thumbs.db
+Desktop.ini
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Node.js
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Build artifacts
+*.o
+*.so
+*.a
+*.out
+*.elf
+build/
+dist/
+*.egg-info/
+
+# Logs and temporary output
+*.log
+logs/
+tmp/
+temp/
+
+# Environment and secrets
+.env
+.env.local
+.env*.local
+secrets/
+*.key
+*.pem
+
+# Docker
+.dockerignore
+
+# Temporary/scratch files
+*.tmp
+*.bak
+*.swp
+.scratch/
