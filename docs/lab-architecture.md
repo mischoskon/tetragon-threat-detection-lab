@@ -2,136 +2,92 @@
 
 ## Current Architecture
 
-The current lab setup is a single, lightweight physical Ubuntu Server 24.04 LTS machine configured with GUI and development tooling.
+The project currently uses two separate physical systems with different responsibilities:
 
-```
+- **Development workstation** — GitHub repository, VS Code/Codex workflow, ChatGPT, and polished documentation.
+- **Dedicated Ubuntu lab laptop** — Ubuntu Server 24.04 LTS with a GUI installed afterwards; this is where Linux runtime experiments and observations are performed.
+
+```text
 Development Workstation
-    ↓
-[GitHub Repository & Documentation]
-    ↓
-Dedicated Ubuntu Lab Machine (24.04 LTS)
-    ↓
-[Linux Experiments & Observations]
+    │
+    │ repository / documentation workflow
+    ▼
+GitHub
+
+Dedicated Ubuntu Lab Laptop
+    │
+    └── Linux runtime experiments and observations
 ```
 
-**Why a single, dedicated lab machine?**
-
-- **Simplicity and focus**: A lightweight VM or physical machine is sufficient for initial Linux runtime security exploration
-- **Affordability**: Keeps lab infrastructure lean
-- **Learning progression**: Allows deep understanding of single-node fundamentals before adding complexity (containers, multi-node Kubernetes)
-- **Reproducibility**: Easier to track state and document exact conditions
-- **Clear separation**: Distinguishes between documentation environment (workstation) and experiment environment (lab)
-
-The development workstation maintains the repository and documentation; the lab machine is the actual experimental environment where runtime security observations occur.
+The two systems are intentionally separate. The repository documents the lab, but the development workstation is **not** the runtime-security target being studied.
 
 ## Current Architecture Diagram
 
+```mermaid
+flowchart LR
+    A["Development Workstation<br/>VS Code / Codex / ChatGPT"] --> B["GitHub Repository<br/>Documentation and artifacts"]
+    C["Dedicated Ubuntu Lab Laptop<br/>Ubuntu Server 24.04 LTS + GUI"] --> D["Linux Runtime Experiments<br/>Processes, /proc, syscalls, isolation"]
+    A -. "optional administration / SSH later" .-> C
 ```
-┌─────────────────────────────────────┐
-│   Development Workstation           │
-│   ┌─────────────────────────────┐   │
-│   │  GitHub Repository          │   │
-│   │  Documentation              │   │
-│   │  (Markdown, Architecture)   │   │
-│   └─────────────────────────────┘   │
-└──────────────────┬──────────────────┘
-                   │
-                   │ (Sync / Document)
-                   │
-┌──────────────────▼──────────────────┐
-│   Ubuntu Lab Machine (24.04 LTS)    │
-│   ┌─────────────────────────────┐   │
-│   │  Linux Runtime Environment  │   │
-│   │  - Kernel & syscalls        │   │
-│   │  - Processes & signals      │   │
-│   │  - eBPF readiness           │   │
-│   │  - Experimental tools       │   │
-│   └─────────────────────────────┘   │
-└─────────────────────────────────────┘
-```
+
+### Why a Dedicated Single-Machine Lab?
+
+- **Focus:** Linux behaviour can be studied without Kubernetes infrastructure becoming the first problem to solve.
+- **Isolation:** Experimental changes remain separate from the primary workstation.
+- **Reproducibility:** Fewer moving parts make observations easier to repeat and explain.
+- **Resource efficiency:** A single physical host is sufficient for the planned single-node environment.
+- **Progression:** Containers, Kubernetes, eBPF, and Tetragon are added only when the relevant underlying concepts are established.
 
 ## Planned Evolution
 
-Over time, the lab will expand to include:
+The lab will grow progressively rather than being built as a complete security stack on day one.
 
-1. **Phase 1: Linux Fundamentals**
-   - Process model, syscall tracing
-   - /proc filesystem exploration
-   - strace and perf instrumentation
+```mermaid
+flowchart TD
+    A["Dedicated Ubuntu Lab"] --> B["Linux Process and Syscall Experiments"]
+    B --> C["Container Runtime Experiments"]
+    C --> D["Single-node K3s"]
+    D --> E["eBPF Observation and Development"]
+    E --> F["Cilium Tetragon"]
+    F --> G["Runtime Detection and Enforcement Experiments"]
+    G --> H["ATT&CK and CVE-driven Research"]
+```
 
-2. **Phase 2: Container Runtime**
-   - Docker or containerd setup
-   - Container syscall interception
-   - Container isolation mechanisms
-
-3. **Phase 3: Kubernetes**
-   - Single-node K3s deployment
-   - Pod networking and isolation
-   - Workload observation
-
-4. **Phase 4: eBPF & Tetragon**
-   - eBPF program development
-   - Cilium Tetragon deployment
-   - Runtime event collection
-
-5. **Phase 5: Detection Engineering**
-   - Threat model mapping (MITRE ATT&CK)
-   - Detection rule design
-   - False-positive tuning
-
-6. **Phase 6: CVE-Driven Research**
-   - Vulnerability analysis
-   - Runtime behaviour capture
-   - Detection validation
+The exact tooling at each layer will be introduced only when it supports a specific learning or detection objective.
 
 ## Conceptual Security Observation Path
 
-From application to kernel-level detection:
+A central question for the project is how high-level application or attacker behaviour becomes observable at lower layers of the system.
 
-```
-Application Code
-    ↓
-Container Runtime
-    ↓
-Kubernetes Pod / Orchestration
-    ↓
-Linux Process Model
-    ↓
-Linux Kernel Syscalls
-    ↓
-eBPF Programs / Tetragon Hooks
-    ↓
-Runtime Security Events & Enforcement
-```
-
-As we progress through phases, we will observe how application and container behaviour manifests as observable events at each layer, and ultimately as Tetragon runtime security signals.
-
-## Architecture Evolution Diagram
+The conceptual path we will investigate is:
 
 ```mermaid
-graph LR
-    A["Phase 0: Lab Foundation"] --> B["Phase 1: Linux"]
-    B --> C["Phase 2: Containers"]
-    C --> D["Phase 3: K3s"]
-    D --> E["Phase 4: eBPF/Tetragon"]
-    E --> F["Phase 5: Detection Engineering"]
-    F --> G["Phase 6: CVE Research"]
-    
-    style A fill:#e1f5ff
-    style B fill:#f3e5f5
-    style C fill:#fce4ec
-    style D fill:#fff3e0
-    style E fill:#e0f2f1
-    style F fill:#f1f8e9
-    style G fill:#ede7f6
+flowchart TD
+    A["Application / Attacker Behaviour"] --> B["Containerized Workload"]
+    B --> C["Kubernetes Pod Context"]
+    C --> D["Linux Process"]
+    D --> E["Linux Kernel Behaviour"]
+    E --> F["eBPF / Tetragon Observation Point"]
+    F --> G["Runtime Security Event"]
+    G --> H["Detection or Enforcement Decision"]
 ```
 
-## Rationale: Single Machine Over Multi-Node
+This diagram is **conceptual**, not a claim that every layer is already deployed in Phase 0. At the current stage, only the Ubuntu lab and Linux-level exploration exist.
 
-- **Cognitive load**: Multi-node complexity defers fundamental Linux understanding
-- **Cost**: A single lab machine has minimal infrastructure overhead
-- **Clarity**: Isolated experiments are easier to reason about and reproduce
-- **Progression**: Single-node mastery informs later cluster design decisions
-- **Scalability**: When we eventually add containers and K3s, the underlying Linux knowledge remains the foundation
+## Architecture Principles
 
-The goal is deep, reproducible understanding—not infrastructure scale.
+### Current State Must Match Reality
+
+Architecture diagrams distinguish between what is deployed today and what is planned. Future Kubernetes, eBPF, or Tetragon components should not appear as current infrastructure before they actually exist.
+
+### Build Complexity Only When It Teaches Something
+
+The goal is not to construct the largest possible homelab. Each additional component should answer a technical question or enable an experiment that cannot be performed cleanly at the current layer.
+
+### Preserve Reproducibility
+
+When architecture changes affect experimental results, the relevant configuration and version information should be recorded alongside the experiment or environment documentation.
+
+### Separate Raw Learning from Public Artifacts
+
+Raw notes, questions, failed assumptions, and resource links remain in Notion. GitHub contains reproducible experiments, validated observations, and polished technical documentation.
