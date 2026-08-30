@@ -2,164 +2,150 @@
 
 ## Purpose
 
-Phase 0 establishes the foundational lab environment and documents the baseline infrastructure. This phase does not introduce Tetragon, Cilium, Kubernetes, or eBPF tools yet; instead, it captures the state of the underlying Ubuntu system and verifies prerequisites for future phases.
+Phase 0 establishes the foundational lab environment and documents the baseline infrastructure. This phase does not introduce Tetragon, Kubernetes, or eBPF development tooling yet; instead, it captures the state of the underlying Ubuntu system and verifies the prerequisites that matter for later runtime-security work.
 
-The lab environment is a dedicated physical machine where all experiments and observations will occur. This document records configuration, capabilities, and design decisions for reproducibility.
+The lab is a dedicated physical laptop, separate from the development workstation used for GitHub, VS Code, Codex, and documentation. All runtime experiments and observations are performed on the lab machine.
 
 ## Current Environment
 
-**Lab Machine Type:** Physical or dedicated virtual machine (separate from development workstation)
+**Lab Machine Type:** Dedicated physical laptop
 
-**Operating System:** Ubuntu Server 24.04 LTS with GUI installed afterwards
+**Operating System:** Ubuntu Server 24.04 LTS with a GUI installed afterwards
 
-**Purpose:** Dedicated experimental environment for runtime security research and Tetragon detection engineering
+**Purpose:** Dedicated experimental environment for Linux runtime-security research and, in later phases, Tetragon detection engineering
 
 ### Hardware & Kernel Configuration
 
 | Property | Value |
 |----------|-------|
-| Ubuntu Release | `[PLACEHOLDER: To be confirmed from `lsb_release -d` on lab machine]` |
-| Kernel Version | `[PLACEHOLDER: To be confirmed from `uname -r` on lab machine]` |
-| Architecture | `[PLACEHOLDER: To be confirmed from `uname -m` on lab machine]` |
-| CPU Count | `[PLACEHOLDER: To be confirmed from `nproc` on lab machine]` |
-| Memory (Total) | `[PLACEHOLDER: To be confirmed from `free -h` on lab machine]` |
-| Disk Space (Available) | `[PLACEHOLDER: To be confirmed from `df -h` on lab machine]` |
+| Ubuntu Release | `[PLACEHOLDER: confirm with cat /etc/os-release or lsb_release -d]` |
+| Kernel Version | `[PLACEHOLDER: confirm with uname -r]` |
+| Architecture | `[PLACEHOLDER: confirm with uname -m]` |
+| CPU Count | `[PLACEHOLDER: confirm with nproc or lscpu]` |
+| Memory (Total) | `[PLACEHOLDER: confirm with free -h]` |
+| Root Filesystem Capacity / Usage | `[PLACEHOLDER: confirm with df -h /]` |
 
-*Note: These values describe the **lab machine only**, not the development workstation.*
+*These values must describe the dedicated lab machine, not the development workstation or any WSL environment.*
 
 ## Software / Tools
 
-### Pre-installed (Ubuntu 24.04 LTS baseline)
-- **Package Manager:** apt/dpkg
-- **Shell:** bash (typically)
-- **Build Tools:** gcc, make, git (standard Ubuntu server)
-- **Python:** Python 3.x (standard Ubuntu 24.04)
-- **Text Editors:** nano, vim
+Only tools actually verified on the lab machine should be listed here as installed. Ubuntu package contents vary by installation choices, so this document does not assume that compilers, Git, Python, editors, or tracing tools are present merely because the system is Ubuntu Server.
 
-### Required for Upcoming Phases (Not yet installed)
+### Verified Base Components
 
-| Tool | Purpose | Phase | Status |
-|------|---------|-------|--------|
-| **strace** | System call tracing | Phase 1 | Not installed |
-| **perf** | Performance and kernel profiling | Phase 1 | Not installed |
-| **Docker** or **containerd** | Container runtime | Phase 2 | Not installed |
-| **K3s** | Lightweight Kubernetes | Phase 3 | Not installed |
-| **eBPF tools** (clang, llvm, libbpf) | eBPF program development | Phase 4 | Not installed |
-| **Cilium Tetragon** | Runtime security platform | Phase 4 | Not installed |
-| **Go** (optional) | Tetragon and tool development | Phase 4 | Not installed |
+| Component | Status |
+|-----------|--------|
+| Ubuntu Server 24.04 LTS | Installed |
+| Graphical desktop environment | Installed after the server installation |
+| Package management (`apt` / `dpkg`) | Available |
+| Additional development / tracing tools | Document as they are verified or installed |
 
-### Notes
-- Do not install additional software as part of Phase 0
-- Tools will be installed progressively as they are needed in subsequent phases
-- All installations should be documented with version numbers and configuration steps
+### Tools Introduced in Later Phases
+
+These are planned tools, not Phase 0 prerequisites:
+
+| Tool | Purpose | Introduced when needed |
+|------|---------|------------------------|
+| `strace` | System-call tracing | Linux processes / syscalls work |
+| `bpftrace` | Interactive eBPF tracing | eBPF fundamentals |
+| `bpftool` | Inspect BPF objects and kernel BPF capabilities | eBPF fundamentals |
+| container runtime | Container experiments | Containers phase |
+| K3s | Lightweight single-node Kubernetes | Kubernetes phase |
+| Clang / LLVM and related eBPF tooling | eBPF program development | eBPF phase |
+| Cilium Tetragon | Runtime observability and enforcement | Tetragon phase |
+| Go | Tetragon source exploration and tooling | Later source/contribution work |
+
+Tools will be introduced progressively so that each dependency has a clear purpose and its configuration can be documented deliberately.
 
 ## Kernel and eBPF Readiness
 
-### Kernel Requirements
+Kernel version alone is not enough to prove that a system is suitable for all eBPF or Tetragon functionality. Relevant kernel configuration, available attachment mechanisms, BTF data, privileges, and the features used by a specific experiment all matter.
 
-The lab machine's kernel must support:
-- **eBPF programs** (Linux 5.0+)
-- **BPF LSM** (Linux 5.8+, if used)
-- **Tracepoints and kprobes** (most modern kernels)
-- **BTF (BPF Type Format)** support (recommended for Tetragon, Linux 5.8+)
+Phase 0 therefore records a small number of non-invasive readiness signals rather than treating eBPF support as a single yes/no property.
 
-### Readiness Check
+### Readiness Checks
 
-| Capability | Required | Status |
-|------------|----------|--------|
-| eBPF Support | Yes | `[PLACEHOLDER: To be verified with `bpftool version` on lab machine]` |
-| BTF Support | Recommended | `[PLACEHOLDER: To be verified with `bpftool btf list` on lab machine]` |
-| eBPF JIT | Recommended | `[PLACEHOLDER: To be verified from `/proc/sys/kernel/bpf_jit_enable` on lab machine]` |
-| Unprivileged eBPF | No | `[PLACEHOLDER: Lab assumes root or CAP_SYS_ADMIN availability]` |
+| Check | Why it matters | Status |
+|-------|----------------|--------|
+| Kernel version | Establishes the kernel baseline for later feature checks | `[PLACEHOLDER]` |
+| BTF file at `/sys/kernel/btf/vmlinux` | Strong indicator that kernel BTF information is exposed to BPF tooling | `[PLACEHOLDER]` |
+| `/sys/fs/bpf` availability | Identifies the BPF filesystem location used by later tooling | `[PLACEHOLDER]` |
+| Unprivileged BPF policy | Helps explain which operations require elevated privileges | `[PLACEHOLDER]` |
 
 ### Verification Command Reference
 
-Once the lab machine is accessible, verify eBPF readiness with:
+Run these commands **on the dedicated lab machine** and record the actual results rather than inferring them from the distribution name:
 
 ```bash
-# Check kernel version
+# Distribution and kernel baseline
+cat /etc/os-release
 uname -r
+uname -m
 
-# Check BTF support
-bpftool btf list
+# Hardware baseline
+nproc
+free -h
+df -h /
 
-# Check eBPF availability
-cat /proc/sys/kernel/unprivileged_bpf_disabled
+# BTF exposed by the running kernel
+if [ -e /sys/kernel/btf/vmlinux ]; then
+  echo "BTF available"
+else
+  echo "BTF not found"
+fi
 
-# Check JIT compilation
-cat /proc/sys/kernel/bpf_jit_enable
+# BPF filesystem (may be mounted later by tooling if not already present)
+mount | grep ' /sys/fs/bpf ' || true
+
+# Kernel policy for unprivileged BPF, when exposed
+cat /proc/sys/kernel/unprivileged_bpf_disabled 2>/dev/null || echo "setting not exposed"
 ```
+
+`bpftool` is intentionally not required for the Phase 0 check because it may not yet be installed. It will become useful later when we intentionally introduce BPF tooling.
 
 ## Design Decisions
 
-### Single Lab Machine (Not Multi-Node)
+### Dedicated Single-Machine Lab
 
-**Decision:** Use a single dedicated machine rather than a cluster or multi-VM environment.
-
-**Rationale:**
-1. **Learning Progression**: Deep understanding of single-node Linux fundamentals is prerequisite to container/cluster concepts
-2. **Reproducibility**: Simpler state management and easier to document exact conditions
-3. **Cost Efficiency**: Minimal infrastructure overhead
-4. **Clarity**: Fewer moving parts allow focus on observability patterns
-5. **Scalability Path**: Future phases can introduce containers and K3s once Linux foundations are solid
-
-### Separation of Concerns
-
-**Decision:** Maintain clear distinction between development workstation and lab environment.
+**Decision:** Use one dedicated physical Linux machine instead of a multi-node Kubernetes or multi-VM environment.
 
 **Rationale:**
-- Repository and documentation live on the development machine
-- Experiments and raw observations occur on the dedicated lab machine
-- Reduces accidental contamination of lab environment
-- Simulates real security operations: a SOC analyst maintains logs/documentation separately from monitored infrastructure
+1. **Focus:** Linux runtime behaviour can be studied without unrelated cluster complexity.
+2. **Reproducibility:** Fewer moving parts make experiments easier to repeat and explain.
+3. **Resource efficiency:** The project can progress on modest hardware.
+4. **Isolation:** Potentially disruptive experiments remain separate from the primary workstation.
+5. **Progressive complexity:** Containers, Kubernetes, eBPF, and Tetragon are added only after the underlying Linux concepts are understood.
 
-### No Initial Software Beyond Ubuntu Base
+### Separation of Workstation and Lab
 
-**Decision:** Phase 0 installs no additional tools beyond standard Ubuntu 24.04 LTS.
+**Decision:** Keep development/documentation work and runtime experimentation on separate machines.
 
 **Rationale:**
-- Establishes clean baseline
-- Each tool introduction in future phases is documented and justified
-- Allows verification of lab readiness before complex tooling
+- The development workstation contains the GitHub clone, VS Code/Codex workflow, and polished documentation.
+- The Ubuntu laptop is the system whose processes, kernel behaviour, containers, and later Kubernetes workloads are observed.
+- Results copied into the repository should identify which machine produced them.
+- The separation reduces the risk of accidentally documenting workstation or WSL state as lab evidence.
 
 ## Verification
 
-Use the following checklist to verify Phase 0 completion:
+Phase 0 is complete when the following are true:
 
-- [ ] Lab machine is running Ubuntu Server 24.04 LTS with GUI
-- [ ] Lab machine has network connectivity and SSH access (if remote)
-- [ ] Baseline kernel version and hardware details are documented above
-- [ ] eBPF and BTF support have been verified
-- [ ] Lab machine is isolated from production or critical systems
-- [ ] This document reflects actual lab configuration
+- [ ] The dedicated lab laptop is confirmed to be running Ubuntu Server 24.04 LTS with the added GUI.
+- [ ] Kernel version, architecture, CPU, memory, and filesystem baseline are recorded above.
+- [ ] BTF availability has been checked on the lab machine.
+- [ ] Basic networking is available; SSH may be enabled if remote administration is desired.
+- [ ] The lab is not being used for production or critical workloads.
+- [ ] All values in this document reflect the lab machine rather than the development workstation.
 
 ## Future Evolution
 
-### Phase 1 Preparation
+The environment will evolve only when a learning objective requires it. Planned additions include:
 
-Once Phase 0 is verified, prepare for Phase 1 (Linux Fundamentals):
-- [ ] Install strace for syscall tracing
-- [ ] Verify /proc filesystem accessibility
-- [ ] Document any kernel modules or security restrictions
-- [ ] Plan first syscall tracing experiment
+1. Linux tracing and process-inspection tools.
+2. Container-runtime experiments.
+3. Single-node K3s.
+4. eBPF tracing and development tooling.
+5. Tetragon and `tetra`.
+6. Reproducible detection workloads and tests.
 
-### Documentation Updates
-
-As the lab evolves:
-- Update this document with installed tools and versions
-- Record kernel parameters changed for any experiment
-- Document container runtime selection and configuration
-- Track eBPF program development environment setup
-
-### Archive Snapshots
-
-Consider capturing lab machine state at key milestones:
-- After kernel verification
-- After each major tool installation
-- Before and after large experiments
-- For baseline comparison during troubleshooting
-
----
-
-**Last Updated:** Phase 0 initialization  
-**Lab Status:** Foundation established, awaiting Phase 1 preparation
+When the environment changes, record tool versions or configuration details **when they materially affect reproducibility or observed behaviour**. Avoid turning this file into a complete package inventory.
