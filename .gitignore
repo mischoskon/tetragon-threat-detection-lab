@@ -1,59 +1,46 @@
-# Editor and IDE
+# Editors / IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
-*.sublime-project
-*.sublime-workspace
 
-# OS temporary files
+# OS metadata
+.DS_Store
 Thumbs.db
 Desktop.ini
 
-# Python
+# Python environments and cache
 __pycache__/
 *.py[cod]
-*$py.class
 .venv/
 venv/
-ENV/
-
-# Node.js
-node_modules/
-npm-debug.log
-package-lock.json
 
 # Build artifacts
-*.o
-*.so
-*.a
-*.out
-*.elf
 build/
 dist/
-*.egg-info/
+*.o
+*.a
+*.so
+*.out
+*.elf
 
 # Logs and temporary output
 *.log
 logs/
 tmp/
 temp/
+*.tmp
+*.bak
+.scratch/
 
-# Environment and secrets
+# Local secrets and environment files
 .env
-.env.local
-.env*.local
+.env.*
+!.env.example
 secrets/
 *.key
 *.pem
 
-# Docker
-.dockerignore
-
-# Temporary/scratch files
-*.tmp
-*.bak
-*.swp
-.scratch/
+# Dependency directories, if introduced later
+node_modules/
